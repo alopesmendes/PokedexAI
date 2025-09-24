@@ -140,6 +140,9 @@ libs = [
     "libs-view",  
 ]
 ```
+- For NavRoutes they should be `sealed class` that inherits from `Routes` having the label be a string id, an unselected and selected icon.
+  - Should have a companion object with all navRoutes
+
 # Sources
 - Api source : https://pokeapi.co/docs/v2
 - For the principal library's use :
@@ -168,3 +171,4 @@ libs = [
 - The order of parameters in a function (specially in a `@Composable` function) should always be obligatory parameters => parameters with a default value => functions
 - All interface names should start with I
 - For adaptive composable respect the rules define in the official android documentation https://developer.android.com/develop/ui/compose/layouts/adaptive/adaptive-dos-and-donts
+- The Routes.kt should have the parent `sealed interface Route` and every other Route should inherited from it. Every route should be annotated with `@Serializable`
