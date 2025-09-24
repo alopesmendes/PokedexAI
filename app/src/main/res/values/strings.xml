@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">PokedewAI</string>
+    <string name="nav_home_label">Home</string>
+    <string name="nav_search_label">Search</string>
+    <string name="nav_locations_label">Locations</string>
+    <string name="nav_settings_label">Settings</string>
 </resources>
