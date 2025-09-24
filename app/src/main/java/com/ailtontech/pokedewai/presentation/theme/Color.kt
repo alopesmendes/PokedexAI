@@ -1,4 +1,4 @@
-package com.ailtontech.pokedewai.ui.theme
+package com.ailtontech.pokedewai.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
