@@ -142,6 +142,8 @@ libs = [
 ```
 - For NavRoutes they should be `sealed class` that inherits from `Routes` having the label be a string id, an unselected and selected icon.
   - Should have a companion object with all navRoutes
+- The test name should be like `given ... when ... then ...` for unitTest and for integration test it should be given[...]When[...]Then[...]
+- When I give you instructions to how to create a datasource, repository, useCase, reducer, you should always generate the unit test files. And for the components, screens always generate the integration tests.
 
 # Sources
 - Api source : https://pokeapi.co/docs/v2
