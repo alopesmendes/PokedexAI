@@ -66,9 +66,13 @@ dependencies {
     // Navigation Bundle
     implementation(libs.bundles.androidx.navigation)
 
+    // kotlinx
+    implementation(libs.coroutines)
+
     // Test dependencies
     testImplementation(libs.mockk)
     testImplementation(libs.junit)
+    testImplementation(libs.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom)) // Also for test Compose library versions
