@@ -12,7 +12,7 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.ailtontech.pokedewai.R // Assuming R file will be generated/available
-import kotlinx.serialization.Contextual
+import kotlinx.serialization.Contextual // Uncommented
 import kotlinx.serialization.Serializable // Required for @Serializable
 
 /**
@@ -32,10 +32,9 @@ sealed interface Route
  */
 @Serializable
 sealed class NavRoutes(
-    @Contextual
     @StringRes val label: Int,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
+    @Contextual val selectedIcon: ImageVector, // Added @Contextual
+    @Contextual val unselectedIcon: ImageVector // Added @Contextual
 ) : Route {
 
     @Serializable
