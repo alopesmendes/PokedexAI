@@ -1,6 +1,8 @@
 package com.ailtontech.pokedewai.di
 
+import com.ailtontech.pokedewai.features.home.data.datasources.remote.IPokemonFormRemoteDatasource
 import com.ailtontech.pokedewai.features.home.data.datasources.remote.IPokemonListRemoteDatasource
+import com.ailtontech.pokedewai.features.home.data.datasources.remote.impl.PokemonFormRemoteDatasourceImpl
 import com.ailtontech.pokedewai.features.home.data.datasources.remote.impl.PokemonListRemoteDatasourceImpl
 import com.ailtontech.pokedewai.utils.Constants
 import io.ktor.client.HttpClient
@@ -75,4 +77,11 @@ val datasourceModule: Module = module {
             httpClient = get()
         )
     } bind IPokemonListRemoteDatasource::class
+
+    single {
+        PokemonFormRemoteDatasourceImpl(
+            dispatcher = get(DispatcherQualifiers.Io),
+            httpClient = get()
+        )
+    } bind IPokemonFormRemoteDatasource::class
 }
