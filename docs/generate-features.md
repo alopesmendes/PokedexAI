@@ -146,6 +146,20 @@ suspend fun getResource(id: String): ResourceDto {
 }
 ```
 
+#### Step 5: DI
+Add the datasource to the DatasourceModule:
+
+Example of implementation: 
+
+```kotlin
+    single {
+        PokemonListRemoteDatasourceImpl(
+            dispatcher = get(DispatcherQualifiers.Io),
+            httpClient = get()
+        )
+    } bind IPokemonListRemoteDatasource::class
+```
+
 ---
 
 ## Feature Structure Template
@@ -222,7 +236,7 @@ class ProfileRemoteDataSourceImpl(
 // File: features/profile/data/mappers/ProfileMapper.kt
 object ProfileMapper {
     
-    fun toDomain(dto: ProfileDto): Profile {
+    fun ProfileDto.toDomain(dto: ProfileDto): Profile {
         return Profile(
             userId = dto.userId,
             fullName = dto.fullName,
@@ -231,7 +245,7 @@ object ProfileMapper {
         )
     }
     
-    fun toDto(entity: Profile): ProfileDto {
+    fun Profile.toDto(entity: Profile): ProfileDto {
         return ProfileDto(
             userId = entity.userId,
             fullName = entity.fullName,
