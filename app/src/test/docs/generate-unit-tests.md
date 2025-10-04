@@ -82,82 +82,67 @@ All base test classes are located in `test_utils/` package.
 
 ```kotlin
 @ExperimentalCoroutinesApi
-class ProfileRemoteDatasourceImplTest : BaseRemoteDatasourceTest() {
+class PokemonListRemoteDatasourceImplTest : BaseRemoteDatasourceTest() {
 
-    private lateinit var datasource: ProfileRemoteDatasourceImpl
+    private lateinit var datasource: IPokemonListRemoteDatasource
 
     @Before
     override fun setUp() {
         super.setUp()
-        datasource = ProfileRemoteDatasourceImpl(
+        datasource = PokemonListRemoteDatasourceImpl(
             dispatcher = testDispatcher,
             httpClient = httpClient
         )
     }
 
-    private val validDto = ProfileDto(
-        userId = "123",
-        fullName = "John Doe",
-        email = "john@example.com",
-        avatarUrl = null
-    )
-    private val validJson = Json.encodeToString(ProfileDto.serializer(), validDto)
-
     @Test
-    fun `given successful response when getProfile then return ProfileDto`() = runTest(testDispatcher) {
-        prepareSuccessResponse(validJson)
+    fun `given a valid response, when getPokemonList is called, then it should return a PokemonListDto`() = runTest {
+        // Given
+        val json = JsonReader.readJsonFile("pokemon_list_success.json")
+        prepareSuccessResponse(json)
 
-        val result = datasource.getProfile("123")
+        // When
+        val result = datasource.getPokemonList(offset = 0, limit = 20)
 
-        assertEquals(validDto.userId, result.userId)
-        assertEquals(validDto.fullName, result.fullName)
+        // Then
+        assertEquals(1302, result.count)
+        assertEquals(20, result.results.size)
+        assertEquals("bulbasaur", result.results.first().name)
     }
 
     @Test
-    fun `given HTTP 404 error when getProfile then throw HttpError`() = runTest(testDispatcher) {
-        val statusCode = HttpStatusCode.NotFound
-        prepareHttpErrorResponse(statusCode, """{"detail":"Not found"}""")
+    fun `given a 404 error, when getPokemonList is called, then it should throw HttpError`() = runTest {
+        // Given
+        prepareHttpErrorResponse(HttpStatusCode.NotFound)
 
-        var caughtError: Throwable? = null
-        try {
-            datasource.getProfile("123")
-        } catch (e: Throwable) {
-            caughtError = e
+        // When & Then
+        val exception = assertFailsWith<Error.HttpError> {
+            datasource.getPokemonList(offset = 9999, limit = 20)
         }
-
-        assertNotNull("An error should have been thrown", caughtError)
-        assertTrue("Error should be of type Error.HttpError", caughtError is Error.HttpError)
-        assertEquals(statusCode.value, (caughtError as Error.HttpError).statusCode)
+        assertEquals(404, exception.statusCode)
     }
 
     @Test
-    fun `given network error when getProfile then throw NetworkError`() = runTest(testDispatcher) {
-        prepareNetworkError(IOException("No internet"))
+    fun `given a network error, when getPokemonList is called, then it should throw NetworkError`() = runTest {
+        // Given
+        prepareNetworkError()
 
-        var caughtError: Throwable? = null
-        try {
-            datasource.getProfile("123")
-        } catch (e: Throwable) {
-            caughtError = e
+        // When & Then
+        assertFailsWith<Error.NetworkError> {
+            datasource.getPokemonList(offset = 0, limit = 20)
         }
-
-        assertNotNull(caughtError)
-        assertTrue(caughtError is Error.NetworkError)
     }
 
     @Test
-    fun `given malformed JSON when getProfile then throw SerializationError`() = runTest(testDispatcher) {
-        prepareSuccessResponse("""{"invalid": [MALFORMED JSON]}""")
+    fun `given a malformed json, when getPokemonList is called, then it should throw SerializationError`() = runTest {
+        // Given
+        prepareSuccessResponse("""{"invalid":"json"}""")
 
-        var caughtError: Throwable? = null
-        try {
-            datasource.getProfile("123")
-        } catch (e: Throwable) {
-            caughtError = e
+        // When & Then
+        val exception = assertFailsWith<Error.SerializationError> {
+            datasource.getPokemonList(offset = 0, limit = 20)
         }
-
-        assertNotNull(caughtError)
-        assertTrue(caughtError is Error.SerializationError)
+        assertNotNull(exception.cause)
     }
 }
 ```
