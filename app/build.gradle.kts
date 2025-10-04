@@ -70,6 +70,7 @@ dependencies {
     implementation(libs.coroutines)
 
     // Test dependencies
+    testImplementation(kotlin("test"))
     testImplementation(libs.mockk)
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
