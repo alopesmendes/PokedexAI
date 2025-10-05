@@ -8,7 +8,7 @@ package com.ailtontech.pokedewai.features.home.domain.commands
  * @property limit The max number of pokemons to return.
  */
 data class PokemonPaginationParams(
-    val count: Int,
-    val offset: Int,
-    val limit: Int,
+    val count: Int?,
+    val offset: Int?,
+    val limit: Int?,
 )

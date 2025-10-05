@@ -12,8 +12,8 @@ class GetPokemonsUseCaseImpl(
     override suspend fun invoke(command: PokemonPaginationParams): PokemonListQuery {
         val result = repository.getPaginatedPokemons(
             count = command.count,
-            offset = command.offset,
-            limit = command.limit
+            offset = command.offset ?: 0,
+            limit = command.limit ?: 20,
         )
 
         return result.fold(

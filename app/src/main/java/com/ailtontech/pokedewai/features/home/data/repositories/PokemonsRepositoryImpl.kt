@@ -18,15 +18,15 @@ class PokemonsRepositoryImpl(
     private val pokemonFormRemoteDatasource: IPokemonFormRemoteDatasource,
 ) : IPokemonsRepository {
     override suspend fun getPaginatedPokemons(
-        count: Int,
+        count: Int?,
         offset: Int,
-        limit: Int): Result<PokemonList> {
-
+        limit: Int
+    ): Result<PokemonList> {
         when {
-            count < 0 -> return Result.failure(PokemonsFailure.CountIsNegativeFailure())
+            count != null && count < 0 -> return Result.failure(PokemonsFailure.CountIsNegativeFailure())
             offset < 0 -> return Result.failure(PokemonsFailure.OffsetIsNegativeFailure())
             limit <= 0 -> return Result.failure(PokemonsFailure.LimitIsZeroOrNegativeFailure())
-            offset + limit > count -> return Result.failure(PokemonsFailure.OffsetGoesOverTotalFailure())
+            count != null && offset + limit > count -> return Result.failure(PokemonsFailure.OffsetGoesOverTotalFailure())
         }
 
         return try {
