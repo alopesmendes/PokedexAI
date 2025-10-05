@@ -9,6 +9,7 @@
 ## Table of Contents
 - [Feature Creation Workflow](#feature-creation-workflow)
 - [Remote DataSource Creation](#remote-datasource-creation)
+- [Repository Creation](#repository-creation)
 - [Code Generation Examples](#code-generation-examples)
 - [Validation Checklist](#validation-checklist)
 
@@ -158,6 +159,96 @@ Example of implementation:
             httpClient = get()
         )
     } bind IPokemonListRemoteDatasource::class
+```
+
+---
+
+## Repository Creation
+
+### Workflow for Creating Repositories
+
+This workflow outlines the steps to create a repository, which is responsible for abstracting data sources and providing a clean API to the domain layer.
+
+#### Step 1: Verify Domain Entity Exists
+Before creating the repository, ensure the domain entity you need to expose already exists in the `domain/entities/` directory. If it does not, **stop and ask** for the entity to be created first. The repository should only work with and expose domain models.
+
+#### Step 2: Create Repository Interface
+Define the repository contract in the `domain/repositories/` directory. This interface should only expose domain entities and use the `Result` wrapper for all data-fetching operations.
+
+**Example:**
+```kotlin
+// In domain/repositories/IProfileRepository.kt
+interface IProfileRepository {
+    suspend fun getProfile(id: String): Result<Profile>
+}
+```
+
+#### Step 3: Create Failure Sealed Class
+If a specific failure class for the feature does not exist, create one in the `domain/failures/` directory. This class should extend `Throwable` and represent all possible business-rule or data-access failures for the feature.
+
+**Example:**
+```kotlin
+// In domain/failures/ProfileFailure.kt
+sealed class ProfileFailure(
+    override val message: String?,
+    override val cause: Throwable?
+) : Throwable(message, cause) {
+
+    data class UserNotFound(val id: String) : ProfileFailure("User with ID $id not found.", null)
+    data class NetworkError(override val cause: Throwable) : ProfileFailure("A network error occurred.", cause)
+    data class UnknownError(override val cause: Throwable) : ProfileFailure("An unknown error occurred.", cause)
+}
+```
+
+#### Step 4: Create DTO to Entity Mapper
+In the `data/mappers/` package, create or update the mapper file to include an extension function that converts the data layer's DTO to the domain entity.
+
+**Example:**
+```kotlin
+// In data/mappers/ProfileMapper.kt
+fun ProfileDto.toEntity(): Profile {
+    return Profile(
+        userId = this.userId,
+        fullName = this.fullName,
+        email = this.email
+    )
+}
+```
+
+#### Step 5: Create Repository Implementation
+In `data/repositories/`, create the repository implementation. This class will depend on one or more data sources. It is responsible for calling the datasource, catching any `Error` types, and mapping them to the feature-specific `Failure`.
+
+**Example:**
+```kotlin
+// In data/repositories/ProfileRepositoryImpl.kt
+class ProfileRepositoryImpl(
+    private val remoteDataSource: IProfileRemoteDataSource
+) : IProfileRepository {
+
+    override suspend fun getProfile(id: String): Result<Profile> {
+        return try {
+            val profileDto = remoteDataSource.getProfile(id)
+            Result.success(profileDto.toEntity())
+        } catch (e: Error) {
+            Result.failure(e.toProfileFailure()) // Maps a generic Error to a specific ProfileFailure
+        }
+    }
+}
+```
+
+#### Step 6: Add Documentation
+Ensure all new public classes and methods have clear and concise KDoc documentation explaining their purpose, parameters, and return values.
+
+#### Step 7: Register with Koin
+Finally, register the repository implementation in the `repositoryModule.kt` file for dependency injection.
+
+**Example:**
+```kotlin
+// In @/app/src/main/java/com/ailtontech/pokedewai/di/RepositoryModule.kt
+val repositoryModule: Module = module {
+    // ... other repositories
+    singleOf(::ProfileRepositoryImpl) bind IProfileRepository::class
+}
 ```
 
 ---
@@ -530,44 +621,5 @@ Refer to **@path/to/project-architecture-style.md** for the complete folder stru
 ```
 1. Verify DTO exists (stop if not)
 2. Create interface I{Name}RemoteDataSource
-3. Create implementation {Name}RemoteDataSourceImpl
-4. Create test file
-5. Use ApiServices.execute wrapper
-6. Reference API documentation
+3. Create implementation {Name}RemoteDataSo
 ```
-
-### Create Complete Layer
-```
-Data:
-1. DTOs (models/)
-2. DataSources (datasources/)
-3. Repositories (repositories/)
-4. Mappers (mappers/)
-5. Errors (errors/)
-
-Domain:
-1. Entities (entities/)
-2. Repository Interfaces (repositories/)
-3. Commands (commands/)
-4. Use Cases (useCases/)
-5. Failures (failures/)
-
-Presentation:
-1. Models (models/)
-2. Events (reducers/events/)
-3. Effects (reducers/effects/)
-4. State (reducers/)
-5. ViewModels (viewModels/)
-6. Screens (screens/)
-7. Components (components/)
-8. Mappers (mappers/)
-```
-
----
-
-**Remember:** Always cross-reference with:
-- **@./coding-style.md** for detailed Kotlin and Compose conventions
-- **@path/to/rules.md** for all BR, OP, and SF rules
-- **@./project-architecture-style.md** for complete project structure
-- **@./app/src/test/docs/generate-unit-tests.md** for unit testing guidelines
-- **@./app/src/androidTest/docs/generate-integration-test.md** for integration testing guidelines

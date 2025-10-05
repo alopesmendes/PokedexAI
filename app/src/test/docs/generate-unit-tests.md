@@ -8,6 +8,7 @@
 ## Table of Contents
 - [Test Naming Conventions](#test-naming-conventions)
 - [Base Test Classes](#base-test-classes)
+- [Mock Data Builders](#mock-data-builders)
 - [Test Examples](#test-examples)
 - [Validation Checklist](#validation-checklist)
 
@@ -73,6 +74,78 @@ All base test classes are located in `test_utils/` package.
 - `testDispatcher: TestDispatcher`
 - `InstantTaskExecutorRule`
 - Dispatcher setup/teardown
+
+---
+
+## Mock Data Builders
+
+To ensure consistency and reduce boilerplate in tests, each feature should have a centralized location for creating mock DTOs and domain entities.
+
+### Structure
+- Inside your feature's test package (e.g., `features/home/`), create a `mocks` package.
+- Inside `mocks`, create a `MockData.kt` file.
+
+### Mock Function Rules
+- All mock-builder functions must be `internal` to restrict their usage to the specific feature's tests.
+- Functions should be named with a `mock` prefix (e.g., `mockPokemonFormDto`).
+- Functions should provide default values for all parameters, allowing tests to override only what's necessary.
+
+### Example: `MockData.kt`
+This file contains builder functions for creating test instances of DTOs and entities.
+
+```kotlin
+// In /app/src/test/java/com/ailtontech/pokedewai/features/home/mocks/MockData.kt
+/**
+ * Creates a mock [PokemonFormDto] for testing.
+ * @param id The mock ID.
+ * @param name The mock name.
+ * @return A mock [PokemonFormDto] instance.
+ */
+internal fun mockPokemonFormDto(
+    id: Int = 1,
+    name: String = "bulbasaur"
+    // ... other parameters with default values
+): PokemonFormDto = PokemonFormDto(
+    id = id,
+    name = name,
+    // ...
+)
+
+/**
+ * Creates a mock [PokemonForm] entity for testing.
+ * @return A mock [PokemonForm] instance.
+ */
+internal fun mockPokemonForm(
+    // ... parameters with default values
+): PokemonForm = PokemonForm(
+    // ...
+)
+```
+
+### Usage in Tests
+Use these helper functions to simplify the "Given" (Arrange) block of your tests.
+
+```kotlin
+// In PokemonsRepositoryImplTest.kt
+@Test
+fun `given successful responses, when getPaginatedPokemons is called, then return success`() = runTest {
+    // Given
+    val pokemonListDto = mockPokemonListDto(count = 100)
+    val pokemonFormDto = mockPokemonFormDto()
+    val expectedPokemonList = mockPokemonList(count = 100)
+
+    coEvery { pokemonListRemoteDatasource.getPokemonList(any(), any()) } returns pokemonListDto
+    coEvery { pokemonFormRemoteDatasource.getPokemonForm(any()) } returns pokemonFormDto
+
+    // When
+    val result = repository.getPaginatedPokemons(count = 100, offset = 0, limit = 20)
+
+    // Then
+    assertTrue(result.isSuccess)
+    assertEquals(expectedPokemonList, result.getOrNull())
+}
+```
+This approach makes tests cleaner, more readable, and easier to maintain.
 
 ---
 
