@@ -14,7 +14,7 @@ object Tools {
      * @return The integer ID of the Pokémon.
      */
     fun extractPokemonIdFromUrl(url: String): Int {
-        return url.substringAfterLast('/').dropLast(1).toInt()
+        return url.trimEnd('/').split('/').last().toInt()
     }
 
     /**
