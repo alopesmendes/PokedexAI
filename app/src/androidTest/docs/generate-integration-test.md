@@ -7,6 +7,7 @@
 ## Table of Contents
 - [Test Naming Conventions](#test-naming-conventions)
 - [Base Test Classes](#base-test-classes)
+- [ViewModel Integration Tests](#viewmodel-integration-tests)
 - [Composable Component Tests](#composable-component-tests)
 - [Screen Integration Tests](#screen-integration-tests)
 - [Accessibility Tests](#accessibility-tests)
@@ -65,6 +66,136 @@ All base test classes are located in `androidTest/test_utils/` package.
 - `navController: TestNavHostController`
 - Navigation test utilities
 - Screen test helpers
+
+#### BaseViewModelTest
+
+**Path:** `test/test_utils/BaseViewModelTest.kt` (Unit Test)
+
+**Purpose:** Base class for ViewModel unit tests that handles coroutine dispatcher setup
+
+**Provides:**
+
+- `instantTaskExecutorRule: InstantTaskExecutorRule`
+- `mainDispatcherRule: MainDispatcherRule`
+- `testDispatcher: TestDispatcher` (via MainDispatcherRule)
+
+**Important Note:**
+The `presentation/viewModels/BaseViewModelTest.kt` unit test already comprehensively tests the core
+BaseViewModel logic:
+
+- Initial state emission
+- State updates via events
+- Effect emission
+- Reducer integration
+
+**Therefore, feature-specific ViewModel tests should ONLY test:**
+
+- Events triggered in the `init` block
+- Initial auto-loading behavior
+- Initialization side effects
+
+---
+
+## ViewModel Integration Tests
+
+### Testing Philosophy
+
+Since `BaseViewModel` is already tested comprehensively, feature ViewModels only need to verify
+their initialization behavior.
+
+### Test Structure
+
+```kotlin
+@ExperimentalCoroutinesApi
+class {Feature }ViewModelTest : BaseViewModelTest() {
+
+    private lateinit var reducer: { Feature } Reducer
+        private lateinit var viewModel: { Feature } ViewModel
+
+        @Before
+        fun setUp() {
+            reducer = mockk(relaxed = true)
+        }
+
+    @Test
+    fun givenViewModelWhenInitializedThenTriggersInitEvents() = runTest {
+        // Given
+        coEvery { reducer.invoke(any(), any()) } returns Next(
+            state = { Feature } State (),
+            effect = null
+        )
+
+        // When
+        viewModel = { Feature } ViewModel (reducer)
+        advanceUntilIdle()
+
+        // Then
+        // Verify init block events were triggered
+        coVerify(exactly = 1) {
+            reducer.invoke(state = any(), event = { Feature } Event . InitialEvent)
+        }
+    }
+}
+```
+
+### Complete ViewModel Test Example
+
+```kotlin
+@ExperimentalCoroutinesApi
+class PokemonsViewModelTest : BaseViewModelTest() {
+
+    private lateinit var reducer: PokemonsReducer
+    private lateinit var viewModel: PokemonsViewModel
+
+    @Before
+    fun setUp() {
+        reducer = mockk(relaxed = true)
+    }
+
+    @Test
+    fun givenViewModelWhenInitializedThenPokemonListLoadingAndGetPokemonsListIsCalled() = runTest {
+        // Given
+        coEvery { reducer.invoke(any(), any()) } returns Next(
+            state = PokemonsState(),
+            effect = null
+        )
+
+        // When
+        viewModel = PokemonsViewModel(reducer)
+        advanceUntilIdle()
+
+        // Then
+        coVerify(exactly = 1) {
+            reducer.invoke(state = any(), event = PokemonsEvent.PokemonsListLoading)
+        }
+        coVerify(exactly = 1) {
+            reducer.invoke(
+                state = any(),
+                event = PokemonsEvent.GetPokemonsList(
+                    offset = any(),
+                    limit = any(),
+                ),
+            )
+        }
+    }
+}
+```
+
+### What NOT to Test in Feature ViewModels
+
+❌ **Do NOT test these** (already tested in BaseViewModel):
+
+- State flow emissions
+- Event handling mechanism
+- Effect emissions
+- State transitions from events
+- Error handling in sendEvent
+
+✅ **DO test these:**
+
+- Init block event triggers
+- Initial state values
+- Auto-loading on initialization
 
 ---
 
@@ -744,6 +875,16 @@ performTouchInput { swipeDown() }
 
 ## Validation Checklist
 
+### ViewModel Integration Test Requirements
+
+- [ ] Test extends `BaseViewModelTest`
+- [ ] Test uses `runTest` for coroutine testing
+- [ ] Test uses `advanceUntilIdle()` to complete all coroutines
+- [ ] Test mocks reducer with `mockk(relaxed = true)`
+- [ ] Test verifies ONLY init block events
+- [ ] Test does NOT duplicate BaseViewModel logic tests
+- [ ] Test uses `coVerify` to verify reducer calls
+
 ### Integration Test Requirements
 - [ ] Test name follows `given[...]When[...]Then[...]` convention in PascalCase
 - [ ] Test extends appropriate Base test class (`BaseComposeTest` or `BaseScreenTest`)
@@ -805,10 +946,10 @@ fun givenFormWhenFilledAndSubmittedThenShowsSuccess() {
     // Fill form
     composeTestRule.onNodeWithTag("name_field").performTextInput("John")
     composeTestRule.onNodeWithTag("email_field").performTextInput("john@example.com")
-    
+
     // Submit
     composeTestRule.onNodeWithText("Submit").performClick()
-    
+
     // Verify
     composeTestRule.onNodeWithText("Success").assertIsDisplayed()
 }
