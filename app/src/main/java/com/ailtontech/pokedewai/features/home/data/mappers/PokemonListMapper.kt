@@ -16,12 +16,12 @@ import com.ailtontech.pokedewai.utils.Tools
  *                         (Note: This parameter is currently unused in the function body).
  * @return A [PokemonList] domain entity containing the total count, pagination info, and a list of Pokemon.
  */
-fun PokemonListDto.toEntity(mapToPokemonForm: (id: Int) -> PokemonForm): PokemonList {
+fun PokemonListDto.toEntity(mapToPokemonForm: (id: Int) -> PokemonForm?): PokemonList {
     return PokemonList(
         count = this.count,
         offset = next?.let { Tools.extractValueFromQueryParam(it, "offset").toInt() },
         limit = next?.let { Tools.extractValueFromQueryParam(it, "limit").toInt() },
-        pokemonForms = this.results.map { result ->
+        pokemonForms = this.results.mapNotNull { result ->
             val pokemonId = Tools.extractPokemonIdFromUrl(result.url)
             mapToPokemonForm(pokemonId)
         },
