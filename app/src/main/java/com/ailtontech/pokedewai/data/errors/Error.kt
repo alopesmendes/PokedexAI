@@ -1,10 +1,5 @@
 package com.ailtontech.pokedewai.data.errors
 
-import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.plugins.ServerResponseException
-import kotlinx.serialization.SerializationException
-import java.io.IOException
-
 /**
  * Base sealed class for all custom errors in the data layer.
  * Extends Throwable to be used in Result classes or try/catch blocks.
