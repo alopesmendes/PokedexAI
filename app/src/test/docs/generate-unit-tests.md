@@ -65,6 +65,26 @@ All base test classes are located in `test_utils/` package.
 **Provides:**
 - `testDispatcher: TestDispatcher`
 
+#### BaseUseCaseTest
+
+**Path:** `test_utils/BaseUseCaseTest.kt`
+
+**Purpose:** Test use cases
+
+**Provides:**
+
+- `testDispatcher: TestDispatcher`
+
+#### BaseReducerTest
+
+**Path:** `test_utils/BaseReducerTest.kt`
+
+**Purpose:** Test reducers
+
+**Provides:**
+
+- `testDispatcher: TestDispatcher`
+
 #### BaseViewModelTest
 **Path:** `test_utils/BaseViewModelTest.kt`
 
@@ -194,29 +214,6 @@ class PokemonListRemoteDatasourceImplTest : BaseRemoteDatasourceTest() {
         }
         assertEquals(404, exception.statusCode)
     }
-
-    @Test
-    fun `given a network error, when getPokemonList is called, then it should throw NetworkError`() = runTest {
-        // Given
-        prepareNetworkError()
-
-        // When & Then
-        assertFailsWith<Error.NetworkError> {
-            datasource.getPokemonList(offset = 0, limit = 20)
-        }
-    }
-
-    @Test
-    fun `given a malformed json, when getPokemonList is called, then it should throw SerializationError`() = runTest {
-        // Given
-        prepareSuccessResponse("""{"invalid":"json"}""")
-
-        // When & Then
-        val exception = assertFailsWith<Error.SerializationError> {
-            datasource.getPokemonList(offset = 0, limit = 20)
-        }
-        assertNotNull(exception.cause)
-    }
 }
 ```
 
@@ -235,13 +232,6 @@ class ProfileRepositoryImplTest : BaseRepositoryTest() {
         remoteDataSource = mockk()
         repository = ProfileRepositoryImpl(remoteDataSource)
     }
-
-    private val validDto = ProfileDto(
-        userId = "123",
-        fullName = "John Doe",
-        email = "john@example.com",
-        avatarUrl = null
-    )
 
     @Test
     fun `given successful datasource response when getProfile then return Success with Profile`() = runTest(testDispatcher) {
@@ -271,45 +261,135 @@ class ProfileRepositoryImplTest : BaseRepositoryTest() {
 ### Use Case Test
 
 ```kotlin
-class GetProfileUseCaseTest {
+@ExperimentalCoroutinesApi
+class GetPokemonsUseCaseImplTest : BaseUseCaseTest() {
 
-    private lateinit var repository: IProfileRepository
-    private lateinit var useCase: GetProfileUseCase
+    private lateinit var repository: IPokemonsRepository
+    private lateinit var useCase: GetPokemonsUseCaseImpl
 
     @Before
-    fun setUp() {
+    override fun setUp() {
+        super.setUp()
         repository = mockk()
-        useCase = GetProfileUseCase(repository)
-    }
-
-    private val validProfile = Profile(
-        userId = "123",
-        fullName = "John Doe",
-        email = "john@example.com",
-        avatarUrl = null
-    )
-
-    @Test
-    fun `given repository success when invoke then return Success with Profile`() = runTest {
-        coEvery { repository.getProfile(any()) } returns Result.success(validProfile)
-
-        val result = useCase("123")
-
-        assertTrue(result.isSuccess)
-        assertEquals(validProfile, result.getOrNull())
-        coVerify(exactly = 1) { repository.getProfile("123") }
+        useCase = GetPokemonsUseCaseImpl(repository)
     }
 
     @Test
-    fun `given repository failure when invoke then return Failure`() = runTest {
-        val exception = Exception("Network error")
-        coEvery { repository.getProfile(any()) } returns Result.failure(exception)
+    fun `given repository success, when invoke is called, then return success`() = runTest {
+        // Given
+        val pokemonList = mockPokemonList()
+        val command = PokemonPaginationParams(count = 100, offset = 0, limit = 20)
+        coEvery { repository.getPaginatedPokemons(any(), any(), any()) } returns Result.success(pokemonList)
 
-        val result = useCase("123")
+        // When
+        val result = useCase(command)
 
-        assertTrue(result.isFailure)
-        assertEquals(exception, result.exceptionOrNull())
-        coVerify(exactly = 1) { repository.getProfile("123") }
+        // Then
+        when(result) {
+            is PokemonListQuery.Success -> assertEquals(pokemonList, result.pokemonList)
+            is PokemonListQuery.Error -> fail("Should be a success, but got a failure: ${result.failure}")
+        }
+    }
+
+    @Test
+    fun `given repository failure, when invoke is called, then return failure`() = runTest {
+        // Given
+        val failure = PokemonsFailure.NetworkFailure("No connection")
+        val command = PokemonPaginationParams(count = 100, offset = 0, limit = 20)
+        coEvery { repository.getPaginatedPokemons(any(), any(), any()) } returns Result.failure(failure)
+
+        // When
+        val result = useCase(command)
+
+        // Then
+        when(result) {
+            is PokemonListQuery.Success -> fail("Should be a failure, but got a success: ${result.pokemonList}")
+            is PokemonListQuery.Error -> assertEquals(failure, result.failure)
+        }
+    }
+}
+```
+
+### Reducer Test
+
+Reducer tests verify that a given state and event produce the correct next state and/or effect. Each
+event path must be tested, including success and failure scenarios from use case interactions.
+
+```kotlin
+@ExperimentalCoroutinesApi
+class PokemonsReducerTest : BaseReducerTest() {
+
+    private lateinit var getPokemonsUseCase: IGetPokemonsUseCase
+    private lateinit var reducer: PokemonsReducer
+
+    @Before
+    override fun setUp() {
+        super.setUp()
+        getPokemonsUseCase = mockk()
+        reducer = PokemonsReducer(getPokemonsUseCase)
+    }
+
+    @Test
+    fun `given PokemonsListLoading event, when reducer is invoked, then state should be loading`() = runTest {
+        // Given
+        val initialState = PokemonsState()
+        val event = PokemonsEvent.PokemonsListLoading
+
+        // When
+        val next = reducer(initialState, event)
+
+        // Then
+        assertTrue(next.state!!.isLoading)
+    }
+
+    @Test
+    fun `given GetPokemonsList event and use case success, when reducer is invoked, then state should be updated with new data`() = runTest {
+        // Given
+        val initialState = PokemonsState()
+        val event = PokemonsEvent.GetPokemonsList(offset = 0, limit = 20)
+        val pokemonList = mockPokemonList()
+        val successResult = PokemonListQuery.Success(pokemonList)
+        coEvery { getPokemonsUseCase(any()) } returns successResult
+
+        // When
+        val next = reducer(initialState, event)
+
+        // Then
+        assertFalse(next.state!!.isLoading)
+        assertEquals(pokemonList.pokemonForms, next.state!!.pokemons)
+        assertEquals(pokemonList.count, next.state!!.count)
+    }
+
+    @Test
+    fun `given GetPokemonsList event and use case failure, when reducer is invoked, then state should be updated with failure`() = runTest {
+        // Given
+        val initialState = PokemonsState()
+        val event = PokemonsEvent.GetPokemonsList(offset = 0, limit = 20)
+        val failure = PokemonsFailure.NetworkFailure("No connection")
+        val errorResult = PokemonListQuery.Error(failure)
+        coEvery { getPokemonsUseCase(any()) } returns errorResult
+
+        // When
+        val next = reducer(initialState, event)
+
+        // Then
+        assertFalse(next.state!!.isLoading)
+        assertEquals(failure, next.state!!.failure)
+    }
+
+    @Test
+    fun `given GetPokemonDetail event, when reducer is invoked, then it should emit NavigateToPokemonDetail effect`() = runTest {
+        // Given
+        val initialState = PokemonsState()
+        val event = PokemonsEvent.GetPokemonDetail(id = 1)
+
+        // When
+        val next = reducer(initialState, event)
+
+        // Then
+        assertNull(next.state)
+        assertTrue(next.effect is PokemonsEffect.NavigateToPokemonDetail)
+        assertEquals(1, (next.effect as PokemonsEffect.NavigateToPokemonDetail).id)
     }
 }
 ```

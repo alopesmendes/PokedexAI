@@ -10,6 +10,8 @@
 - [Feature Creation Workflow](#feature-creation-workflow)
 - [Remote DataSource Creation](#remote-datasource-creation)
 - [Repository Creation](#repository-creation)
+- [Use Case Creation](#use-case-creation)
+- [Reducer Creation](#reducer-creation)
 - [Code Generation Examples](#code-generation-examples)
 - [Validation Checklist](#validation-checklist)
 
@@ -253,6 +255,154 @@ val repositoryModule: Module = module {
 
 ---
 
+## Use Case Creation
+
+### Workflow for Creating Use Cases
+
+Use cases orchestrate the flow of data to and from repositories and contain the core business logic. They are invoked by ViewModels and should follow a command-based pattern.
+
+#### Step 1: Verify Commands Exist
+Before creating a use case, verify that the necessary command and query classes exist in the `domain/commands/` directory.
+- A **command** (e.g., `PokemonPaginationParams.kt`) is a data class that encapsulates the input parameters for the use case.
+- A **query result** (e.g., `PokemonListQuery.kt`) is a sealed class that represents the possible outcomes of the use case (`Success` or `Error`).
+
+If these classes do not exist, **stop and ask** for them to be created first.
+
+#### Step 2: Create Use Case Interface
+In the `domain/useCases/` directory, create an interface for the use case. It must contain a single `suspend operator fun invoke` method that takes the command as a parameter and returns the query result.
+
+**Example:**
+```kotlin
+// In domain/useCases/IGetPokemonsUseCase.kt
+interface IGetPokemonsUseCase {
+    suspend operator fun invoke(command: PokemonPaginationParams): PokemonListQuery
+}
+```
+
+#### Step 3: Create Use Case Implementation
+In `domain/useCases/impl/`, create the use case implementation. It will depend on a repository and contain the business logic for mapping the repository's `Result` to the appropriate query `Success` or `Error` state.
+
+**Example:**
+```kotlin
+// In domain/useCases/impl/GetPokemonsUseCaseImpl.kt
+class GetPokemonsUseCaseImpl(
+    private val repository: IPokemonsRepository
+): IGetPokemonsUseCase {
+    override suspend fun invoke(command: PokemonPaginationParams): PokemonListQuery {
+        val result = repository.getPaginatedPokemons(
+            count = command.count,
+            offset = command.offset,
+            limit = command.limit
+        )
+
+        return result.fold(
+            onSuccess = { value -> PokemonListQuery.Success(value) },
+            onFailure = { error -> PokemonListQuery.Error(error as PokemonsFailure) },
+        )
+    }
+}
+```
+
+#### Step 4: Add Documentation
+Ensure all new public classes and methods have clear and concise KDoc documentation.
+
+#### Step 5: Register with Koin
+Add the use case to the `useCasesModule.kt` in the `di` package.
+
+**Example:**
+```kotlin
+// In @/app/src/main/java/com/ailtontech/pokedewai/di/UseCasesModule.kt
+val useCasesModule: Module = module {
+    // ... other use cases
+    singleOf(::GetPokemonsUseCaseImpl) bind IGetPokemonsUseCase::class
+}
+```
+
+---
+
+## Reducer Creation
+
+### Workflow for Creating Reducers
+
+Reducers are a core component of the MVI architecture. They are responsible for processing events,
+executing business logic (via use cases), and producing new states or side effects.
+
+#### Step 1: Create Events and Effects
+
+If they do not already exist for the feature, create the `Event` and `Effect` sealed interfaces in
+the `presentation/reducers/events/` and `presentation/reducers/effects/` directories. These must
+follow rule **BR-02** (`@Immutable sealed interface`).
+
+**Example:**
+
+```kotlin
+// In presentation/reducers/events/PokemonsEvent.kt
+@Immutable
+sealed interface PokemonsEvent {
+    data object PokemonsListLoading : PokemonsEvent
+    data class GetPokemonsList(val offset: Int, val limit: Int) : PokemonsEvent
+    data class GetPokemonDetail(val id: Int) : PokemonsEvent
+}
+
+// In presentation/reducers/effects/PokemonsEffect.kt
+@Immutable
+sealed interface PokemonsEffect {
+    data class NavigateToPokemonDetail(val id: Int) : PokemonsEffect
+}
+```
+
+#### Step 2: Create Reducer Implementation
+
+In the `presentation/reducers/` directory, create the reducer class. It must implement the
+`IReducer<State, Event, Effect>` interface.
+
+**Example:**
+
+```kotlin
+// In presentation/reducers/PokemonsReducer.kt
+class PokemonsReducer(
+    private val getPokemonsUseCase: IGetPokemonsUseCase,
+) : IReducer<PokemonsState, PokemonsEvent, PokemonsEffect> {
+    override suspend fun invoke(
+        state: PokemonsState,
+        event: PokemonsEvent
+    ): Next<PokemonsState, PokemonsEffect> {
+        return when (event) {
+            is PokemonsEvent.PokemonsListLoading -> {
+                Next(state = state.copy(isLoading = true, failure = null))
+            }
+            is PokemonsEvent.GetPokemonsList -> {
+                // ... call use case and return Next(state=...)
+            }
+            is PokemonsEvent.GetPokemonDetail -> {
+                Next(effect = PokemonsEffect.NavigateToPokemonDetail(id = event.id))
+            }
+        }
+    }
+}
+```
+
+#### Step 3: Add Documentation
+
+Add clear and concise KDoc to all new classes and methods to explain their purpose and
+functionality.
+
+#### Step 4: Register with Koin
+
+Finally, add the reducer to the `reducerModule.kt` in the `di` package.
+
+**Example:**
+
+```kotlin
+// In @/app/src/main/java/com/ailtontech/pokedewai/di/ReducerModule.kt
+val reducerModule: Module = module {
+    // ... other reducers
+    singleOf(::PokemonsReducer) bind IReducer::class
+}
+```
+
+---
+
 ## Feature Structure Template
 
 Refer to **@./project-architecture-style.md** for the complete feature folder structure and organization.
@@ -296,330 +446,5 @@ interface IProfileRemoteDataSource {
     suspend fun deleteProfile(userId: String): Unit
 }
 
-// File: features/profile/data/datasources/ProfileRemoteDataSourceImpl.kt
-class ProfileRemoteDataSourceImpl(
-    private val apiService: ProfileApiService
-) : IProfileRemoteDataSource {
-    
-    override suspend fun getProfile(userId: String): ProfileDto {
-        return ApiServices.execute {
-            apiService.getProfile(userId)
-        }
-    }
-    
-    override suspend fun updateProfile(userId: String, profileDto: ProfileDto): ProfileDto {
-        return ApiServices.execute {
-            apiService.updateProfile(userId, profileDto)
-        }
-    }
-    
-    override suspend fun deleteProfile(userId: String) {
-        return ApiServices.execute {
-            apiService.deleteProfile(userId)
-        }
-    }
-}
-```
-
-### Example 4: Data Mapper
-
-```kotlin
-// File: features/profile/data/mappers/ProfileMapper.kt
-object ProfileMapper {
-    
-    fun ProfileDto.toDomain(dto: ProfileDto): Profile {
-        return Profile(
-            userId = dto.userId,
-            fullName = dto.fullName,
-            email = dto.email,
-            avatarUrl = dto.avatarUrl
-        )
-    }
-    
-    fun Profile.toDto(entity: Profile): ProfileDto {
-        return ProfileDto(
-            userId = entity.userId,
-            fullName = entity.fullName,
-            email = entity.email,
-            avatarUrl = entity.avatarUrl
-        )
-    }
-}
-```
-
-### Example 5: Repository
-
-```kotlin
-// File: features/profile/domain/repositories/IProfileRepository.kt
-interface IProfileRepository {
-    suspend fun getProfile(userId: String): Result<Profile>
-    suspend fun updateProfile(userId: String, profile: Profile): Result<Profile>
-    suspend fun deleteProfile(userId: String): Result<Unit>
-}
-
-// File: features/profile/data/repositories/ProfileRepositoryImpl.kt
-class ProfileRepositoryImpl(
-    private val remoteDataSource: IProfileRemoteDataSource
-) : IProfileRepository {
-    
-    override suspend fun getProfile(userId: String): Result<Profile> {
-        return runCatching {
-            val dto = remoteDataSource.getProfile(userId)
-            ProfileMapper.toDomain(dto)
-        }
-    }
-    
-    override suspend fun updateProfile(userId: String, profile: Profile): Result<Profile> {
-        return runCatching {
-            val dto = ProfileMapper.toDto(profile)
-            val updatedDto = remoteDataSource.updateProfile(userId, dto)
-            ProfileMapper.toDomain(updatedDto)
-        }
-    }
-    
-    override suspend fun deleteProfile(userId: String): Result<Unit> {
-        return runCatching {
-            remoteDataSource.deleteProfile(userId)
-        }
-    }
-}
-```
-
-### Example 6: Use Case
-
-```kotlin
-// File: features/profile/domain/useCases/GetProfileUseCase.kt
-class GetProfileUseCase(
-    private val repository: IProfileRepository
-) {
-    suspend operator fun invoke(userId: String): Result<Profile> {
-        return repository.getProfile(userId)
-    }
-}
-```
-
-### Example 7: Commands
-
-```kotlin
-// File: features/profile/domain/commands/CreateProfileCommand.kt
-data class CreateProfileCommand(
-    val fullName: String,
-    val email: String,
-    val avatarUrl: String?
-)
-
-// File: features/profile/domain/commands/ReadProfileCommand.kt
-data class ReadProfileCommand(
-    val userId: String
-)
-
-// File: features/profile/domain/commands/UpdateProfileCommand.kt
-data class UpdateProfileCommand(
-    val userId: String,
-    val fullName: String?,
-    val email: String?,
-    val avatarUrl: String?
-)
-
-// File: features/profile/domain/commands/DeleteProfileCommand.kt
-data class DeleteProfileCommand(
-    val userId: String
-)
-```
-
-### Example 8: Presentation Models
-
-```kotlin
-// File: features/profile/presentation/models/ProfileModel.kt
-@Immutable
-data class ProfileModel(
-    val userId: String,
-    val displayName: String,
-    val email: String,
-    val avatarUrl: String?,
-    val isVerified: Boolean
-)
-```
-
-### Example 9: Events and Effects
-
-```kotlin
-// File: features/profile/presentation/reducers/events/ProfileEvent.kt
-@Immutable
-sealed interface ProfileEvent {
-    data class LoadProfile(val userId: String) : ProfileEvent
-    data object RefreshProfile : ProfileEvent
-    data class UpdateProfile(
-        val fullName: String,
-        val email: String
-    ) : ProfileEvent
-    data object DeleteProfile : ProfileEvent
-}
-
-// File: features/profile/presentation/reducers/effects/ProfileEffect.kt
-@Immutable
-sealed interface ProfileEffect {
-    data class ShowMessage(val message: String) : ProfileEffect
-    data class ShowError(val error: String) : ProfileEffect
-    data object NavigateBack : ProfileEffect
-    data object NavigateToSettings : ProfileEffect
-}
-```
-
-### Example 10: State
-
-```kotlin
-// File: features/profile/presentation/reducers/ProfileState.kt
-@Immutable
-data class ProfileState(
-    val isLoading: Boolean = false,
-    val profile: ProfileModel? = null,
-    val error: String? = null,
-    val isRefreshing: Boolean = false
-)
-```
-
-### Example 11: Screen
-
-```kotlin
-// File: features/profile/presentation/screens/ProfileScreen.kt
-@Composable
-fun ProfileScreen(
-    userId: String,
-    viewModel: ProfileViewModel = koinViewModel(),
-    modifier: Modifier = Modifier,
-    onNavigateBack: () -> Unit = {}
-) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    
-    LaunchedEffect(userId) {
-        viewModel.onEvent(ProfileEvent.LoadProfile(userId))
-    }
-    
-    LaunchedEffect(Unit) {
-        viewModel.effects.collect { effect ->
-            when (effect) {
-                is ProfileEffect.NavigateBack -> onNavigateBack()
-                is ProfileEffect.ShowMessage -> {
-                    // Show snackbar
-                }
-                is ProfileEffect.ShowError -> {
-                    // Show error
-                }
-                is ProfileEffect.NavigateToSettings -> {
-                    // Navigate
-                }
-            }
-        }
-    }
-    
-    ProfileScreenContent(
-        state = state,
-        onEvent = viewModel::onEvent,
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun ProfileScreenContent(
-    state: ProfileState,
-    onEvent: (ProfileEvent) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        when {
-            state.isLoading -> {
-                CircularProgressIndicator()
-            }
-            state.profile != null -> {
-                ProfileCard(
-                    profile = state.profile,
-                    onRefresh = { onEvent(ProfileEvent.RefreshProfile) }
-                )
-            }
-            state.error != null -> {
-                Text(text = "Error: ${state.error}")
-            }
-        }
-    }
-}
-
-@Preview
-@PreviewLightDark
-@Composable
-private fun ProfileScreenPreview() {
-    AppTheme {
-        ProfileScreenContent(
-            state = ProfileState(
-                profile = ProfileModel(
-                    userId = "1",
-                    displayName = "John Doe",
-                    email = "john@example.com",
-                    avatarUrl = null,
-                    isVerified = true
-                )
-            ),
-            onEvent = {}
-        )
-    }
-}
-```
-
----
-
-## Validation Checklist
-
-Before considering a feature complete, validate against all rules:
-
-### Behavioral Rules (BR)
-- [ ] **BR-01:** All state classes annotated with `@Immutable`
-- [ ] **BR-02:** Events and effects are `@Immutable sealed interface`
-- [ ] **BR-03:** Presentation models use `@Immutable` or `@Stable`
-- [ ] **BR-04:** Use cases only expose `invoke()` method
-- [ ] **BR-05:** Routes inherit from `sealed interface Route` with `@Serializable`
-
-### Operational Rules (OP)
-- [ ] **OP-01:** Screen files/functions end with `Screen`
-- [ ] **OP-02:** All interfaces start with `I`
-- [ ] **OP-03:** DTOs have `Dto` suffix, `@Serializable`, and `@SerialName` on all parameters
-- [ ] **OP-04:** Commands follow CRUD naming conventions
-- [ ] **OP-05:** Function parameters ordered: required → defaults → functions
-- [ ] **OP-06:** Adaptive composables follow official guidelines
-
-### Safety Rules (SF)
-- [ ] **SF-01:** Error/failure classes extend `Throwable`
-- [ ] **SF-02:** State classes use immutable collections only
-
-### Additional Checks
-- [ ] All DTOs created before datasources
-- [ ] API documentation referenced for endpoints
-- [ ] `ApiServices.execute` used for all API calls
-- [ ] Mappers created for data ↔ domain and domain ↔ presentation
-- [ ] ViewModels extend BasicViewModel (refer to project standards)
-- [ ] Screens collect state with `collectAsStateWithLifecycle()`
-- [ ] Preview composables are private and include multiple preview annotations
-
----
-
-## Quick Command Reference
-
-### Create New Feature
-Refer to **@path/to/project-architecture-style.md** for the complete folder structure.
-
-```
-1. Create folder: features/{featureName}/
-2. Create data layer subdirectories
-3. Create domain layer subdirectories
-4. Create presentation layer subdirectories
-```
-
-### Create Remote DataSource
-```
-1. Verify DTO exists (stop if not)
-2. Create interface I{Name}RemoteDataSource
-3. Create implementation {Name}RemoteDataSo
+// File: features/profile/data/datasources/ProfileRemoteDataSourceImpl
 ```
