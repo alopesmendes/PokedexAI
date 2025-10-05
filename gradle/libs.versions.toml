@@ -19,6 +19,8 @@ kotlinxSerializationCore = "1.9.0"
 material3AdaptiveNav3 = "1.0.0-alpha03"
 mockk = "1.14.6"
 coroutines = "1.10.2"
+turbine = "1.2.1"
+coreTesting = "2.2.0"
 
 [libraries]
 # KTOR
@@ -54,6 +56,7 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 
 # Mock
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
 
 # Core Navigation 3 libraries
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3Core" }
@@ -71,6 +74,12 @@ androidx-material3-adaptive-navigation3 = { group = "androidx.compose.material3.
 # Coroutines
 coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+
+# Turbine
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+
+# Arch Core Testing
+androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "coreTesting" }
 
 [bundles]
 ktor = [
