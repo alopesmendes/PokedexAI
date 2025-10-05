@@ -11,16 +11,17 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.ailtontech.pokedewai.R // Assuming R file will be generated/available
-import kotlinx.serialization.Contextual // Uncommented
-import kotlinx.serialization.Serializable // Required for @Serializable
+import androidx.navigation3.runtime.NavKey
+import com.ailtontech.pokedewai.R
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 
 /**
  * Base sealed interface for all navigation routes in the application.
  * All routes must be serializable.
  */
 @Serializable
-sealed interface Route
+sealed interface Route : NavKey
 
 /**
  * Defines the primary navigation routes within the application.
@@ -73,4 +74,12 @@ sealed class NavRoutes(
             Settings
         )
     }
+}
+
+@Serializable
+sealed interface RoutesDetail : Route {
+    @Serializable
+    data class PokemonDetail(
+        val id: Int,
+    ) : RoutesDetail
 }
