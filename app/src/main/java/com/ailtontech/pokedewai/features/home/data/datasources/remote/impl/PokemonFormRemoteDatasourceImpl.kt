@@ -26,14 +26,14 @@ class PokemonFormRemoteDatasourceImpl(
      * The actual API call is wrapped with [ApiServices.execute] to handle
      * potential errors and map them to custom [com.ailtontech.pokedewai.data.errors.Error] types.
      *
-     * @param id The unique identifier of the Pokemon Form.
+     * @param name The name of the Pokemon Form.
      * @return A [PokemonFormDto] containing the details of the Pokemon Form.
      * @throws com.ailtontech.pokedewai.data.errors.Error for API, network, or parsing issues,
      *         as processed by [ApiServices.execute].
      */
-    override suspend fun getPokemonForm(id: Int): PokemonFormDto {
+    override suspend fun getPokemonForm(name: String): PokemonFormDto {
         return ApiServices.execute(dispatcher) {
-            httpClient.get("pokemon-form/$id").body()
+            httpClient.get("pokemon-form/$name").body()
         }
     }
 }

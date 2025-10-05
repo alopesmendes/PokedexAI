@@ -34,7 +34,7 @@ class PokemonFormRemoteDatasourceImplTest : BaseRemoteDatasourceTest() {
         prepareSuccessResponse(json)
 
         // When
-        val result = datasource.getPokemonForm(id = 1)
+        val result = datasource.getPokemonForm(name = "bulbasar")
 
         // Then
         assertEquals(1, result.id)
@@ -48,7 +48,7 @@ class PokemonFormRemoteDatasourceImplTest : BaseRemoteDatasourceTest() {
 
         // When & Then
         val exception = assertFailsWith<Error.HttpError> {
-            datasource.getPokemonForm(id = -1)
+            datasource.getPokemonForm(name = "bulbasaur")
         }
         assertEquals(404, exception.statusCode)
     }
@@ -60,7 +60,7 @@ class PokemonFormRemoteDatasourceImplTest : BaseRemoteDatasourceTest() {
 
         // When & Then
         assertFailsWith<Error.NetworkError> {
-            datasource.getPokemonForm(id = 1)
+            datasource.getPokemonForm(name = "bulbasaur")
         }
     }
 
@@ -71,7 +71,7 @@ class PokemonFormRemoteDatasourceImplTest : BaseRemoteDatasourceTest() {
 
         // When & Then
         val exception = assertFailsWith<Error.SerializationError> {
-            datasource.getPokemonForm(id = 1)
+            datasource.getPokemonForm(name = "bulbasaur")
         }
         assertNotNull(exception.cause)
     }
