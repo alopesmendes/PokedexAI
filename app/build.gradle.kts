@@ -74,6 +74,7 @@ dependencies {
 
     // kotlinx
     implementation(libs.coroutines)
+    implementation(libs.androidx.compose.material3.window.size.class1)
 
     // Test dependencies
     testImplementation(kotlin("test"))

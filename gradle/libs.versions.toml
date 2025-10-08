@@ -21,6 +21,7 @@ mockk = "1.14.6"
 coroutines = "1.10.2"
 turbine = "1.2.1"
 coreTesting = "2.2.0"
+material3WindowSizeClass = "1.4.0"
 
 [libraries]
 # KTOR
@@ -80,6 +81,7 @@ turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 
 # Arch Core Testing
 androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "coreTesting" }
+androidx-compose-material3-window-size-class1 = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "material3WindowSizeClass" }
 
 [bundles]
 ktor = [
