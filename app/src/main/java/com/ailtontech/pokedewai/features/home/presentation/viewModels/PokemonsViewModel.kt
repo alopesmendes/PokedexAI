@@ -14,6 +14,6 @@ class PokemonsViewModel(
 ) {
     init {
         sendEvent(PokemonsEvent.PokemonsListLoading)
-        sendEvent(PokemonsEvent.GetPokemonsList())
+        sendEvent(PokemonsEvent.GetPokemonsList)
     }
 }

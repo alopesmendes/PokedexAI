@@ -5,9 +5,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 data class AppDimensions(
+    val paddingExtraSmall: Dp,
     val paddingSmall: Dp,
     val paddingMedium: Dp,
     val paddingLarge: Dp,
+    val spacingExtraSmall: Dp,
     val spacingSmall: Dp,
     val spacingMedium: Dp,
     val spacingLarge: Dp,
@@ -17,9 +19,11 @@ data class AppDimensions(
 )
 
 val CompactDimensions = AppDimensions(
+    paddingExtraSmall = 2.dp,
     paddingSmall = 4.dp,
     paddingMedium = 8.dp,
     paddingLarge = 16.dp,
+    spacingExtraSmall = 2.dp,
     spacingSmall = 4.dp,
     spacingMedium = 8.dp,
     spacingLarge = 16.dp,
@@ -29,9 +33,11 @@ val CompactDimensions = AppDimensions(
 )
 
 val MediumDimensions = AppDimensions(
+    paddingExtraSmall = 4.dp,
     paddingSmall = 8.dp,
     paddingMedium = 16.dp,
     paddingLarge = 24.dp,
+    spacingExtraSmall = 4.dp,
     spacingSmall = 8.dp,
     spacingMedium = 16.dp,
     spacingLarge = 24.dp,
@@ -41,9 +47,11 @@ val MediumDimensions = AppDimensions(
 )
 
 val ExpandedDimensions = AppDimensions(
+    paddingExtraSmall = 6.dp,
     paddingSmall = 12.dp,
     paddingMedium = 20.dp,
     paddingLarge = 32.dp,
+    spacingExtraSmall = 6.dp,
     spacingSmall = 12.dp,
     spacingMedium = 20.dp,
     spacingLarge = 32.dp,

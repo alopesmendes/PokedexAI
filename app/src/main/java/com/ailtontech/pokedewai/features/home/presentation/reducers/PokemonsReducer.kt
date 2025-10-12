@@ -3,6 +3,7 @@ package com.ailtontech.pokedewai.features.home.presentation.reducers
 import com.ailtontech.pokedewai.features.home.domain.commands.PokemonListQuery
 import com.ailtontech.pokedewai.features.home.domain.commands.PokemonPaginationParams
 import com.ailtontech.pokedewai.features.home.domain.useCases.IGetPokemonsUseCase
+import com.ailtontech.pokedewai.features.home.presentation.mappers.toCardModel
 import com.ailtontech.pokedewai.features.home.presentation.reducers.effects.PokemonsEffect
 import com.ailtontech.pokedewai.features.home.presentation.reducers.events.PokemonsEvent
 import com.ailtontech.pokedewai.presentation.reducers.IReducer
@@ -27,8 +28,8 @@ class PokemonsReducer(
 
             is PokemonsEvent.GetPokemonsList -> {
                 val pokemonPaginationParams = PokemonPaginationParams(
-                    offset = event.offset,
-                    limit = event.limit,
+                    offset = state.offset,
+                    limit = state.limit,
                     count = state.count,
                 )
                 when (val result = getPokemonsUseCase(pokemonPaginationParams)) {
@@ -39,7 +40,7 @@ class PokemonsReducer(
                                 limit = result.pokemonList.limit,
                                 offset = result.pokemonList.offset,
                                 count = result.pokemonList.count,
-                                pokemons = state.pokemons + result.pokemonList.pokemonForms,
+                                pokemons = state.pokemons + result.pokemonList.pokemonForms.map { it.toCardModel() },
                                 failure = null,
                             )
                         )

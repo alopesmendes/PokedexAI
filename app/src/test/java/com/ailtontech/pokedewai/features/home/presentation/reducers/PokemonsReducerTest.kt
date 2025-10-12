@@ -4,6 +4,7 @@ import com.ailtontech.pokedewai.features.home.domain.commands.PokemonListQuery
 import com.ailtontech.pokedewai.features.home.domain.useCases.IGetPokemonsUseCase
 import com.ailtontech.pokedewai.features.home.failures.PokemonsFailure
 import com.ailtontech.pokedewai.features.home.mocks.mockPokemonList
+import com.ailtontech.pokedewai.features.home.presentation.mappers.toCardModel
 import com.ailtontech.pokedewai.features.home.presentation.reducers.effects.PokemonsEffect
 import com.ailtontech.pokedewai.features.home.presentation.reducers.events.PokemonsEvent
 import com.ailtontech.pokedewai.test_utils.BaseReducerTest
@@ -64,7 +65,7 @@ class PokemonsReducerTest : BaseReducerTest() {
 
             // Then
             assertFalse(next.state.isLoading)
-            assertEquals(pokemonList.pokemonForms, next.state.pokemons)
+            assertEquals(pokemonList.pokemonForms.map { it.toCardModel() }, next.state.pokemons)
             assertEquals(pokemonList.count, next.state.count)
             assertEquals(pokemonList.offset, next.state.offset)
             assertEquals(pokemonList.limit, next.state.limit)

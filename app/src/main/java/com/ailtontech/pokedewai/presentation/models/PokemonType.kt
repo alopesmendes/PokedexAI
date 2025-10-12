@@ -1,4 +1,4 @@
-package com.ailtontech.pokedewai.presentation.model
+package com.ailtontech.pokedewai.presentation.models
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
@@ -23,7 +23,7 @@ enum class PokemonType(val color: Color) {
     ROCK(Color(0xFFB6A136)),
     STEEL(Color(0xFF9EB7B8)),
     WATER(Color(0xFF4592C4)),
-    UNKNOWN(Color.Gray); // Fallback
+    UNKNOWN(Color.Companion.Gray); // Fallback
 
     companion object {
         fun fromString(type: String): PokemonType {
