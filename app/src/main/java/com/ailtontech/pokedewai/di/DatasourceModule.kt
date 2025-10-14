@@ -4,6 +4,8 @@ import com.ailtontech.pokedewai.features.home.data.datasources.remote.IPokemonFo
 import com.ailtontech.pokedewai.features.home.data.datasources.remote.IPokemonListRemoteDatasource
 import com.ailtontech.pokedewai.features.home.data.datasources.remote.impl.PokemonFormRemoteDatasourceImpl
 import com.ailtontech.pokedewai.features.home.data.datasources.remote.impl.PokemonListRemoteDatasourceImpl
+import com.ailtontech.pokedewai.features.pokemonDetail.data.datasources.remote.IPokemonDetailRemoteDatasource
+import com.ailtontech.pokedewai.features.pokemonDetail.data.datasources.remote.PokemonDetailRemoteDatasourceImpl
 import com.ailtontech.pokedewai.utils.Constants
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
@@ -84,4 +86,11 @@ val datasourceModule: Module = module {
             httpClient = get()
         )
     } bind IPokemonFormRemoteDatasource::class
+
+    single {
+        PokemonDetailRemoteDatasourceImpl(
+            dispatcher = get(DispatcherQualifiers.Io),
+            httpClient = get()
+        )
+    } bind IPokemonDetailRemoteDatasource::class
 }

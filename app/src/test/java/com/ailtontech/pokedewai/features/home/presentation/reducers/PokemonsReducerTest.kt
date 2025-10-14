@@ -51,7 +51,7 @@ class PokemonsReducerTest : BaseReducerTest() {
         runTest {
             // Given
             val initialState = PokemonsState()
-            val event = PokemonsEvent.GetPokemonsList(offset = 0, limit = 20)
+            val event = PokemonsEvent.GetPokemonsList
             val pokemonList = mockPokemonList(
                 offset = 20,
                 limit = 20,
@@ -77,7 +77,7 @@ class PokemonsReducerTest : BaseReducerTest() {
         runTest {
             // Given
             val initialState = PokemonsState()
-            val event = PokemonsEvent.GetPokemonsList(offset = 0, limit = 20)
+            val event = PokemonsEvent.GetPokemonsList
             val failure = PokemonsFailure.NetworkFailure("No connection")
             val errorResult = PokemonListQuery.Error(failure)
             coEvery { getPokemonsUseCase(any()) } returns errorResult
