@@ -40,6 +40,19 @@ import com.ailtontech.pokedewai.presentation.theme.LocalDimensions
 import com.ailtontech.pokedewai.presentation.theme.LocalWindowSize
 import com.ailtontech.pokedewai.presentation.theme.PokedexAITheme
 
+/**
+ * A composable that displays a list or grid of Pokémon.
+ *
+ * This component is adaptive and will display a `LazyVerticalGrid` for wider screens (non-compact)
+ * and a `LazyColumn` for compact screens. It also implements an infinite scroll mechanism,
+ * fetching more Pokémon by sending a `PokemonsEvent.GetPokemonsList` event when the user scrolls
+ * to the end of the list. A loading indicator is shown at the bottom while new data is being fetched.
+ *
+ * @param state The current state of the Pokémon list, containing the list of Pokémon and loading status.
+ * @param modifier The modifier to be applied to the layout.
+ * @param sendEvent A lambda function to send events, used for fetching more Pokémon or
+ *                  navigating to a Pokémon's detail screen.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PokemonContent(
@@ -52,7 +65,7 @@ fun PokemonContent(
 
     val isCompact = LocalWindowSize.current.widthSizeClass == WindowWidthSizeClass.Compact
 
-    if (isCompact) {
+    if (!isCompact) {
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(2),
@@ -114,7 +127,7 @@ fun PokemonContent(
 
     val endOfListReached by remember {
         derivedStateOf {
-            if (isCompact) {
+            if (!isCompact) {
                 val layoutInfo = gridState.layoutInfo
                 val visibleItemsInfo = layoutInfo.visibleItemsInfo
                 if (layoutInfo.totalItemsCount == 0) {

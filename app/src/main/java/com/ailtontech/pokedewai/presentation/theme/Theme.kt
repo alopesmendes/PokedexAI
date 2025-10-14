@@ -1,8 +1,10 @@
 package com.ailtontech.pokedewai.presentation.theme
 
 import android.os.Build
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -10,11 +12,13 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.DpSize
 
 private val lightScheme = lightColorScheme(
@@ -250,13 +254,23 @@ val LocalWindowSize = compositionLocalOf {
     WindowSizeClass.calculateFromSize(size = DpSize.Zero)
 }
 
-@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PokedexAITheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val windowSize = if (LocalInspectionMode.current) {
+        LocalWindowSize.current
+    } else {
+        val activity = LocalActivity.current
+        if (activity != null) {
+            calculateWindowSizeClass(activity)
+        } else {
+            LocalWindowSize.current
+        }
+    }
     val density = LocalDensity.current
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -276,14 +290,17 @@ fun PokedexAITheme(
         }
     }
 
-    val dimensions = when (LocalWindowSize.current.widthSizeClass) {
+    val dimensions = when (windowSize.widthSizeClass) {
         WindowWidthSizeClass.Compact -> CompactDimensions
         WindowWidthSizeClass.Medium -> MediumDimensions
         else -> ExpandedDimensions
     }
 
-    CompositionLocalProvider(LocalDimensions provides dimensions) {
-        MaterialTheme(
+    CompositionLocalProvider(
+        LocalDimensions provides dimensions,
+        LocalWindowSize provides windowSize
+    ) {
+        MaterialExpressiveTheme(
             colorScheme = colorScheme,
             typography = Typography,
             content = content
