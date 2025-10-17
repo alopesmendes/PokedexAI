@@ -5,9 +5,24 @@ import com.ailtontech.pokedewai.features.pokemonDetail.domain.failures.PokemonDe
 
 fun Error.toPokemonDetailFailure(): PokemonDetailFailure {
     return when (this) {
-        is Error.HttpError -> PokemonDetailFailure.HttpFailure(this)
-        is Error.NetworkError -> PokemonDetailFailure.NetworkFailure(this)
-        is Error.SerializationError -> PokemonDetailFailure.SerializationFailure(this)
-        is Error.UnknownApiError -> PokemonDetailFailure.UnknownFailure(this)
+        is Error.HttpError -> PokemonDetailFailure.HttpFailure(
+            message = this.message,
+            cause = this.cause
+        )
+
+        is Error.NetworkError -> PokemonDetailFailure.NetworkFailure(
+            message = this.message,
+            cause = this.cause
+        )
+
+        is Error.SerializationError -> PokemonDetailFailure.SerializationFailure(
+            message = this.message,
+            cause = this.cause
+        )
+
+        is Error.UnknownApiError -> PokemonDetailFailure.UnknownFailure(
+            message = this.message,
+            cause = this.cause
+        )
     }
 }

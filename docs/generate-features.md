@@ -203,7 +203,9 @@ sealed class ProfileFailure(
 ```
 
 #### Step 4: Create DTO to Entity Mapper
-In the `data/mappers/` package, create or update the mapper file to include an extension function that converts the data layer's DTO to the domain entity.
+
+In the `data/mappers/` package, create or update the mapper file to include an extension function
+that converts the data layer'''s DTO to the domain entity.
 
 **Rules for creating mappers:**
 
@@ -276,62 +278,70 @@ val repositoryModule: Module = module {
 
 ### Workflow for Creating Use Cases
 
-Use cases orchestrate the flow of data to and from repositories and contain the core business logic. They are invoked by ViewModels and should follow a command-based pattern.
+Use cases orchestrate the flow of data from repositories and contain core business logic. They are
+invoked by ViewModels.
 
-#### Step 1: Verify Commands Exist
-Before creating a use case, verify that the necessary command and query classes exist in the `domain/commands/` directory.
-- A **command** (e.g., `PokemonPaginationParams.kt`) is a data class that encapsulates the input parameters for the use case.
-- A **query result** (e.g., `PokemonListQuery.kt`) is a sealed class that represents the possible outcomes of the use case (`Success` or `Error`).
+#### Step 1: Create Interface, Parameters, and Return Type
 
-If these classes do not exist, **stop and ask** for them to be created first.
+First, create the use case interface in the `domain/usecases/` directory. It should have a single
+`invoke` operator method.
 
-#### Step 2: Create Use Case Interface
-In the `domain/useCases/` directory, create an interface for the use case. It must contain a single `suspend operator fun invoke` method that takes the command as a parameter and returns the query result.
+- If the use case requires input, create a `params` data class in `domain/commands/`.
+- The `invoke` method should return a `query` sealed class, also in `domain/commands/`, which
+  represents the possible outcomes (`Success`, `Failure`).
 
 **Example:**
 ```kotlin
-// In domain/useCases/IGetPokemonsUseCase.kt
-interface IGetPokemonsUseCase {
-    suspend operator fun invoke(command: PokemonPaginationParams): PokemonListQuery
+// 1. Create Params (if needed)
+// file: domain/commands/PokemonDetailParams.kt
+data class PokemonDetailParams(val name: String)
+
+// 2. Create Return Type
+// file: domain/commands/PokemonDetailQuery.kt
+sealed class PokemonDetailQuery {
+    data class Success(val data: PokemonDetail) : PokemonDetailQuery()
+    data class Failure(val error: PokemonDetailFailure) : PokemonDetailQuery()
+}
+
+// 3. Create Interface
+// file: domain/usecases/IGetPokemonDetailUseCase.kt
+interface IGetPokemonDetailUseCase {
+    suspend operator fun invoke(params: PokemonDetailParams): PokemonDetailQuery
 }
 ```
 
-#### Step 3: Create Use Case Implementation
-In `domain/useCases/impl/`, create the use case implementation. It will depend on a repository and contain the business logic for mapping the repository's `Result` to the appropriate query `Success` or `Error` state.
+#### Step 2: Create Implementation
+
+Next, create the implementation class for the use case in `domain/usecases/impl/`. This class will
+implement the interface, depend on a repository, and contain the business logic to fetch and map
+data.
 
 **Example:**
 ```kotlin
-// In domain/useCases/impl/GetPokemonsUseCaseImpl.kt
-class GetPokemonsUseCaseImpl(
-    private val repository: IPokemonsRepository
-): IGetPokemonsUseCase {
-    override suspend fun invoke(command: PokemonPaginationParams): PokemonListQuery {
-        val result = repository.getPaginatedPokemons(
-            count = command.count,
-            offset = command.offset,
-            limit = command.limit
-        )
-
-        return result.fold(
-            onSuccess = { value -> PokemonListQuery.Success(value) },
-            onFailure = { error -> PokemonListQuery.Error(error as PokemonsFailure) },
+// In domain/usecases/impl/GetPokemonDetailUseCaseImpl.kt
+class GetPokemonDetailUseCaseImpl(
+    private val repository: IPokemonDetailRepository
+) : IGetPokemonDetailUseCase {
+    override suspend fun invoke(params: PokemonDetailParams): PokemonDetailQuery {
+        return repository.getPokemonDetail(params.name).fold(
+            onSuccess = { PokemonDetailQuery.Success(it) },
+            onFailure = { PokemonDetailQuery.Failure(it as PokemonDetailFailure) }
         )
     }
 }
 ```
 
-#### Step 4: Add Documentation
-Ensure all new public classes and methods have clear and concise KDoc documentation.
+#### Step 3: Register with Koin
 
-#### Step 5: Register with Koin
-Add the use case to the `useCasesModule.kt` in the `di` package.
+Finally, register the use case implementation in the `@UseCasesModule.kt` file for dependency
+injection.
 
 **Example:**
 ```kotlin
 // In @/app/src/main/java/com/ailtontech/pokedewai/di/UseCasesModule.kt
 val useCasesModule: Module = module {
     // ... other use cases
-    singleOf(::GetPokemonsUseCaseImpl) bind IGetPokemonsUseCase::class
+    singleOf(::GetPokemonDetailUseCaseImpl) bind IGetPokemonDetailUseCase::class
 }
 ```
 
