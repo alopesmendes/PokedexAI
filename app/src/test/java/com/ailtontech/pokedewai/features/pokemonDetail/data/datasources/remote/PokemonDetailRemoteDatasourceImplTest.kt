@@ -30,11 +30,11 @@ class PokemonDetailRemoteDatasourceImplTest : BaseRemoteDatasourceTest() {
     fun `given a valid response, when getPokemonDetail is called, then it should return a PokemonDetailDto`() =
         runTest {
             // Given
-            val json = JsonReader.readJsonFile("json/pokemon_detail_success.json")
+            val json = JsonReader.readJsonFile("pokemon_detail_success.json")
             prepareSuccessResponse(json)
 
             // When
-            val result = datasource.getPokemonDetail("bulbasaur")
+            val result = datasource.getPokemonDetail("clefairy")
 
             // Then
             assertEquals(35, result.id)

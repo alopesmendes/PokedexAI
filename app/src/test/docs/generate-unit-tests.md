@@ -109,6 +109,11 @@ To ensure consistency and reduce boilerplate in tests, each feature should have 
 - All mock-builder functions must be `internal` to restrict their usage to the specific feature's tests.
 - Functions should be named with a `mock` prefix (e.g., `mockPokemonFormDto`).
 - Functions should provide default values for all parameters, allowing tests to override only what's necessary.
+- Always check the feature's DTOs and entities to ensure mock data accurately reflects the real data
+  structures.
+- Avoid instantiating complex nested objects directly within a mock function (e.g.,
+  `com.ailtontech.pokedewai.features.pokemonDetail.domain.entities.Icons()`). Instead, create
+  separate `internal` mock-builder functions for these nested objects.
 
 ### Example: `MockData.kt`
 This file contains builder functions for creating test instances of DTOs and entities.

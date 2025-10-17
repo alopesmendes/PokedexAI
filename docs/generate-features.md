@@ -205,7 +205,14 @@ sealed class ProfileFailure(
 #### Step 4: Create DTO to Entity Mapper
 In the `data/mappers/` package, create or update the mapper file to include an extension function that converts the data layer's DTO to the domain entity.
 
-**Example:**
+**Rules for creating mappers:**
+
+- **Check for Entity Existence**: Before creating a mapper, look up the entities of the current
+  feature. Only create a `Dto` to `Entity` mapper if the entity exists; otherwise, it is not needed.
+- **Mapping `NamedAPIResourceDto`**: When a DTO contains a field of type `NamedAPIResourceDto`, the
+  mapper should map it to the `name` property of the `NamedAPIResourceDto` field in the entity.
+
+**Example of a standard mapper:**
 ```kotlin
 // In data/mappers/ProfileMapper.kt
 fun ProfileDto.toEntity(): Profile {
@@ -213,6 +220,16 @@ fun ProfileDto.toEntity(): Profile {
         userId = this.userId,
         fullName = this.fullName,
         email = this.email
+    )
+}
+```
+
+**Example of a `NamedAPIResourceDto` mapper:**
+
+```kotlin
+fun MoveDto.toEntity(): Move {
+    return Move(
+        move = this.move.name,
     )
 }
 ```
