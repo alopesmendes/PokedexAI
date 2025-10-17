@@ -81,5 +81,6 @@ sealed interface RoutesDetail : Route {
     @Serializable
     data class PokemonDetail(
         val id: Int,
+        val name: String,
     ) : RoutesDetail
 }

@@ -10,6 +10,7 @@ sealed interface PokemonsEvent : IReducer.IEvent {
     data object GetPokemonsList : PokemonsEvent
 
     data class GetPokemonDetail(
-        val id: Int
+        val id: Int,
+        val name: String,
     ) : PokemonsEvent
 }

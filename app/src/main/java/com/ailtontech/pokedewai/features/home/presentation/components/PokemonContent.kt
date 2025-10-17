@@ -79,7 +79,7 @@ fun PokemonContent(
         ) {
             items(state.pokemons, key = { it.id }) { model ->
                 PokemonCard(model = model) {
-                    sendEvent(PokemonsEvent.GetPokemonDetail(model.id))
+                    sendEvent(PokemonsEvent.GetPokemonDetail(id = model.id, name = model.name))
                 }
             }
             if (state.isLoading) {
@@ -97,17 +97,14 @@ fun PokemonContent(
         }
     } else {
         LazyColumn(
-            state = listState,
-            modifier = modifier,
-            contentPadding = PaddingValues(
+            state = listState, modifier = modifier, contentPadding = PaddingValues(
                 vertical = LocalDimensions.current.paddingSmall,
                 horizontal = LocalDimensions.current.paddingMedium
-            ),
-            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacingSmall)
+            ), verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacingSmall)
         ) {
             items(state.pokemons, key = { it.id }) { model ->
                 PokemonCard(model = model) {
-                    sendEvent(PokemonsEvent.GetPokemonDetail(model.id))
+                    sendEvent(PokemonsEvent.GetPokemonDetail(id = model.id, name = model.name))
                 }
             }
             if (state.isLoading) {
@@ -157,10 +154,8 @@ fun PokemonContent(
 private class PokemonContentStateProvider : PreviewParameterProvider<PokemonsState> {
     override val values = sequenceOf(
         PokemonsState(
-            pokemons = emptyList(),
-            isLoading = true
-        ),
-        PokemonsState(
+            pokemons = emptyList(), isLoading = true
+        ), PokemonsState(
             pokemons = listOf(
                 PokemonCardModel(
                     id = 1,
@@ -171,8 +166,7 @@ private class PokemonContentStateProvider : PreviewParameterProvider<PokemonsSta
                     isBattleOnly = false,
                     isDefault = true,
                     isMega = false
-                ),
-                PokemonCardModel(
+                ), PokemonCardModel(
                     id = 4,
                     name = "charmander",
                     imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png",
@@ -181,8 +175,7 @@ private class PokemonContentStateProvider : PreviewParameterProvider<PokemonsSta
                     isBattleOnly = false,
                     isDefault = true,
                     isMega = false
-                ),
-                PokemonCardModel(
+                ), PokemonCardModel(
                     id = 7,
                     name = "squirtle",
                     imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png",
@@ -192,10 +185,8 @@ private class PokemonContentStateProvider : PreviewParameterProvider<PokemonsSta
                     isDefault = true,
                     isMega = false
                 )
-            ),
-            isLoading = false
-        ),
-        PokemonsState(
+            ), isLoading = false
+        ), PokemonsState(
             pokemons = listOf(
                 PokemonCardModel(
                     id = 1,
@@ -206,8 +197,7 @@ private class PokemonContentStateProvider : PreviewParameterProvider<PokemonsSta
                     isBattleOnly = false,
                     isDefault = true,
                     isMega = false
-                ),
-                PokemonCardModel(
+                ), PokemonCardModel(
                     id = 4,
                     name = "charmander",
                     imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png",
@@ -217,8 +207,7 @@ private class PokemonContentStateProvider : PreviewParameterProvider<PokemonsSta
                     isDefault = true,
                     isMega = false
                 )
-            ),
-            isLoading = true
+            ), isLoading = true
         )
     )
 }

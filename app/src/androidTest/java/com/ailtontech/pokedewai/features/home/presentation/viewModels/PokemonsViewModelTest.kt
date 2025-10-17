@@ -43,10 +43,7 @@ class PokemonsViewModelTest : BaseViewModelTest() {
         coVerify(exactly = 1) {
             reducer.invoke(
                 state = any(),
-                event = PokemonsEvent.GetPokemonsList(
-                    offset = any(),
-                    limit = any(),
-                ),
+                event = PokemonsEvent.GetPokemonsList,
             )
         }
     }

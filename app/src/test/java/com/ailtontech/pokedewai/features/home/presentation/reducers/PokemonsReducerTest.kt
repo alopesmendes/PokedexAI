@@ -95,7 +95,7 @@ class PokemonsReducerTest : BaseReducerTest() {
         runTest {
             // Given
             val initialState = PokemonsState()
-            val event = PokemonsEvent.GetPokemonDetail(id = 1)
+            val event = PokemonsEvent.GetPokemonDetail(id = 1, name = "bulbassar")
 
             // When
             val next = reducer(initialState, event)

@@ -7,5 +7,6 @@ import com.ailtontech.pokedewai.presentation.reducers.IReducer
 sealed interface PokemonsEffect : IReducer.IEffect {
     data class NavigateToPokemonDetail(
         val id: Int,
+        val name: String,
     ) : PokemonsEffect
 }

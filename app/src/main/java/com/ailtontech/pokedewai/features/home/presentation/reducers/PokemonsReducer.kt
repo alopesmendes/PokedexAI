@@ -61,7 +61,8 @@ class PokemonsReducer(
                 return Next(
                     state = state,
                     effect = PokemonsEffect.NavigateToPokemonDetail(
-                        id = event.id
+                        id = event.id,
+                        name = event.name,
                     )
                 )
             }
